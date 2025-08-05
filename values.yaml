@@ -1,0 +1,49 @@
+replicaCount: 2
+
+image:
+  repository: nginx
+  pullPolicy: IfNotPresent
+  tag: "latest"
+
+service:
+  name: myweb-mywebapp
+  type: ClusterIP
+  port: 80
+
+configMap:
+  enabled: true
+  data:
+    default.conf: |
+      server {
+        listen 80;
+        server_name localhost;
+        root /usr/share/nginx/html;
+        
+        location / {
+          index index.html;
+        }
+        
+        location =/main {
+          try_files /main.html =404;
+
+        }
+      }
+
+
+persistence:
+  enabled: true
+  storageClass: manual
+  #existingClaim: myweb-pvc
+  accessMode: ReadWriteOnce
+  size: 1Gi
+  path: /mnt/data
+
+ingress:
+  enabled: true
+  className: nginx
+  annotations: {}
+  hosts:
+    - host: mywebapp.local
+      paths:
+        - path: /
+          pathType: Prefix
