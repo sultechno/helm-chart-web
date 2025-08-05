@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Guide: Kubernetes ConfigMap Volumes</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chosen Palette: "Cool Slate" - A clean, modern palette with slate grays, a vibrant blue for interaction, and amber for highlights. -->
+    <!-- Application Structure Plan: The application is designed as a linear, step-by-step interactive lab. This structure is ideal for a tutorial, as it guides the user through a specific process from start to finish. The user initiates each step with a button click, which reveals the corresponding Kubernetes object or result. This active participation, combined with visual feedback (like diagrams and simulated terminal output), enhances learning and retention more effectively than a static text document. The flow is logical: create config -> define app -> deploy -> expose -> verify. -->
+    <!-- Visualization & Content Choices: 
+        - Report Info: `config.properties` file content -> Goal: Inform -> Viz: Styled code block -> Interaction: None -> Justification: Clearly presents the source configuration data.
+        - Report Info: `kubectl create configmap` command -> Goal: Simulate Action -> Viz: Button + Code block -> Interaction: Click -> Justification: Makes the user an active participant in the process.
+        - Report Info: The created ConfigMap object -> Goal: Show Result -> Viz: Styled div representing a K8s object -> Interaction: Appears on click -> Justification: Provides immediate visual feedback for the user's action.
+        - Report Info: The relationship between Pod, Volume, and ConfigMap -> Goal: Explain Relationship -> Viz: HTML/CSS diagram -> Interaction: Appears on click -> Justification: Visually simplifies the abstract concept of a volume mount, which is crucial for understanding.
+        - Report Info: Final verification with `curl` -> Goal: Confirm Success -> Viz: Styled div mimicking terminal output -> Interaction: Appears on click -> Justification: Provides the "Aha!" moment and proves the concept worked.
+        - Library/Method: All interactions are handled with vanilla JavaScript. All visuals are created with HTML and Tailwind CSS.
+    -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Fira+Code&display=swap');
+        .code-block {
+            font-family: 'Fira Code', monospace;
+            white-space: pre-wrap;
+        }
+        .step-card {
+            transition: all 0.5s ease-in-out;
+            opacity: 0.5;
+            transform: translateY(10px);
+        }
+        .step-card.active {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        .step-card:not(.active) .interactive-area {
+            display: none;
+        }
+        .btn {
+            transition: all 0.2s ease;
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+        }
+        .k8s-object {
+            border-left: 4px solid #3b82f6; /* blue-500 */
+        }
+        .highlight-amber { color: #f59e0b; } /* amber-500 */
+        .highlight-sky { color: #38bdf8; } /* sky-400 */
+        .highlight-green { color: #22c55e; } /* green-500 */
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800">
+
+    <div class="container mx-auto max-w-5xl p-4 sm:p-6 lg:p-8">
+        <header class="text-center mb-10">
+            <h1 class="text-4xl font-bold text-slate-900">Interactive Guide to ConfigMap Volumes</h1>
+            <p class="mt-2 text-lg text-slate-600">Learn how to decouple application configuration from container images in Kubernetes.</p>
+        </header>
+
+        <main class="space-y-8">
+            <!-- Introduction -->
+            <div class="bg-white p-6 rounded-lg shadow-sm">
+                <h2 class="text-2xl font-bold text-slate-900 mb-3">What You'll Accomplish</h2>
+                <p class="text-slate-700">In this lab, you will deploy a simple Python web application. Instead of hard-coding its greeting message, you will inject the configuration using a `ConfigMap` mounted as a volume. This is a fundamental pattern for building flexible and maintainable applications on Kubernetes. Click the buttons in each step to proceed through the lab.</p>
+            </div>
+
+            <!-- Step 1: Create the ConfigMap -->
+            <div id="step-1" class="step-card active bg-white p-6 rounded-lg shadow-sm">
+                <h3 class="text-xl font-bold mb-3"><span class="text-blue-600">Step 1:</span> Define and Create the Configuration</h3>
+                <p class="text-slate-700 mb-4">First, we define our application's configuration in a simple properties file. Then, we create a `ConfigMap` object within Kubernetes to hold this data. The `ConfigMap` stores our configuration, making it available to pods within the cluster.</p>
+                
+                <div class="grid md:grid-cols-2 gap-6 items-start">
+                    <div>
+                        <label class="font-semibold text-slate-900">1. Local Configuration File (`config.properties`)</label>
+                        <pre class="code-block bg-slate-900 text-slate-200 rounded-md p-4 mt-2 text-sm">GREETING=Hello from a Kubernetes ConfigMap! This is much better than hard-coding.</pre>
+                    </div>
+                    <div class="interactive-area">
+                        <label class="font-semibold text-slate-900">2. Create the Kubernetes Object</label>
+                        <button id="create-cm-btn" class="btn w-full bg-blue-600 text-white font-semibold py-2 px-4 rounded-md mt-2 hover:bg-blue-700">
+                            Run: `kubectl create configmap app-config ...`
+                        </button>
+                        <div id="cm-result" class="hidden mt-4">
+                            <div class="k8s-object bg-slate-100 p-4 rounded-md">
+                                <p class="font-semibold text-slate-800">✓ ConfigMap Created: `app-config`</p>
+                                <div class="mt-2 text-sm code-block bg-slate-800 text-slate-300 p-3 rounded">
+                                    <span class="highlight-sky">data:</span><br>
+                                    &nbsp;&nbsp;<span class="highlight-green">config.properties:</span> |<br>
+                                    &nbsp;&nbsp;&nbsp;&nbsp;GREETING=Hello from a Kubernetes...
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 2: Create the Deployment -->
+            <div id="step-2" class="step-card bg-white p-6 rounded-lg shadow-sm">
+                <h3 class="text-xl font-bold mb-3"><span class="text-blue-600">Step 2:</span> Deploy the Application</h3>
+                <p class="text-slate-700 mb-4">Next, we define a `Deployment`. This tells Kubernetes to run our Python application container. The crucial part is the `volumes` section, where we mount our `app-config` ConfigMap into the container's filesystem at a specific path.</p>
+                
+                <div class="grid md:grid-cols-2 gap-6 items-start">
+                    <div>
+                        <label class="font-semibold text-slate-900">1. Deployment Definition (`app-deployment.yaml`)</label>
+                        <pre class="code-block bg-slate-900 text-slate-200 rounded-md p-4 mt-2 text-sm">...
+<span class="highlight-amber"># Mount the volume into the container</span>
+volumeMounts:
+- name: config-volume
+  mountPath: /app/config.properties
+  subPath: config.properties
+...
+<span class="highlight-amber"># Define the volume using our ConfigMap</span>
+volumes:
+- name: config-volume
+  configMap:
+    name: app-config
+...</pre>
+                    </div>
+                    <div class="interactive-area">
+                        <label class="font-semibold text-slate-900">2. Deploy and Mount</label>
+                        <button id="deploy-btn" class="btn w-full bg-blue-600 text-white font-semibold py-2 px-4 rounded-md mt-2 hover:bg-blue-700">
+                            Run: `kubectl apply -f app-deployment.yaml`
+                        </button>
+                        <div id="deploy-result" class="hidden mt-4">
+                            <div class="k8s-object bg-slate-100 p-4 rounded-md">
+                                <p class="font-semibold text-slate-800">✓ Deployment Created & Pod Running</p>
+                                <div class="mt-2 text-sm border border-slate-300 rounded-md p-4 flex flex-col items-center text-center">
+                                    <div class="font-mono text-slate-800">Pod: `greeting-app-pod-xxxx`</div>
+                                    <div class="w-full border-2 border-slate-800 rounded-lg p-4 mt-2">
+                                        Container: `web-server`
+                                        <div class="mt-2 pt-2 border-t border-dashed border-slate-400 text-left">
+                                            <p class="text-xs text-slate-600">Filesystem:</p>
+                                            <div class="mt-1 bg-slate-200 p-2 rounded flex items-center">
+                                                <span class="text-blue-600 font-bold">↳</span>
+                                                <span class="ml-2">/app/config.properties</span>
+                                                <span class="text-xs ml-auto text-slate-500">(from ConfigMap)</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 3: Expose and Verify -->
+            <div id="step-3" class="step-card bg-white p-6 rounded-lg shadow-sm">
+                <h3 class="text-xl font-bold mb-3"><span class="text-blue-600">Step 3:</span> Expose and Verify the Result</h3>
+                <p class="text-slate-700 mb-4">Finally, we create a `Service` to expose our application to network traffic. We can then send a request to our application and verify that it's serving the custom greeting message loaded from the `ConfigMap`.</p>
+                <div class="interactive-area">
+                    <button id="verify-btn" class="btn w-full bg-green-600 text-white font-semibold py-2 px-4 rounded-md mt-2 hover:bg-green-700">
+                        Expose Service and Test Application
+                    </button>
+                    <div id="verify-result" class="hidden mt-4">
+                        <label class="font-semibold text-slate-900">Result</label>
+                        <div class="code-block bg-slate-900 text-slate-200 rounded-md p-4 mt-2">
+                            <p class="text-green-400">> curl http://greeting-app-service</p>
+                            <p class="mt-2 text-lg">&lt;h1&gt;Hello from a Kubernetes ConfigMap! This is much better than hard-coding.&lt;/h1&gt;</p>
+                        </div>
+                        <div class="mt-4 bg-blue-100 border-l-4 border-blue-500 text-blue-700 p-4 rounded-md">
+                            <p class="font-bold">Success!</p>
+                            <p>The application correctly read the configuration from the mounted volume. You have successfully decoupled the app's configuration from its container image.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const createCmBtn = document.getElementById('create-cm-btn');
+            const cmResult = document.getElementById('cm-result');
+            const step2 = document.getElementById('step-2');
+
+            const deployBtn = document.getElementById('deploy-btn');
+            const deployResult = document.getElementById('deploy-result');
+            const step3 = document.getElementById('step-3');
+
+            const verifyBtn = document.getElementById('verify-btn');
+            const verifyResult = document.getElementById('verify-result');
+
+            createCmBtn.addEventListener('click', () => {
+                createCmBtn.classList.add('hidden');
+                cmResult.classList.remove('hidden');
+                setTimeout(() => {
+                    step2.classList.add('active');
+                }, 300);
+            });
+
+            deployBtn.addEventListener('click', () => {
+                deployBtn.classList.add('hidden');
+                deployResult.classList.remove('hidden');
+                setTimeout(() => {
+                    step3.classList.add('active');
+                }, 300);
+            });
+
+            verifyBtn.addEventListener('click', () => {
+                verifyBtn.classList.add('hidden');
+                verifyResult.classList.remove('hidden');
+            });
+        });
+    </script>
+
+</body>
+</html>
+

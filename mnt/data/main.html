@@ -1,0 +1,1105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Helm Kubernetes Volume Guide</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        /* CSS Variables for Theming */
+        :root {
+            /* Light Mode (White Background, Futuristic Light Blue Accents) */
+            --bg-gradient-start: #FFFFFF; /* Pure White */
+            --bg-gradient-mid: #FFFFFF; /* Pure White */
+            --bg-gradient-end: #FFFFFF; /* Pure White */
+            --card-bg: #FFFFFF; /* White card background */
+            --main-title-gradient-start: #00BCD4; /* Cyan */
+            --main-title-gradient-end: #0097A7; /* Darker Cyan */
+            --subtitle-color: #4CAF50; /* Green accent */
+            --section-heading-color: #00BCD4;
+            --section-heading-border: #80DEEA; /* Light Blue */
+            --code-block-bg: #263238; /* Dark Grey Blue */
+            --code-block-text: #E0F7FA; /* Light Cyan */
+            --copy-button-bg: #00BCD4;
+            --copy-button-hover-bg: #00838F;
+            --summary-gradient-start: #E0F7FA; /* Light Cyan */
+            --summary-gradient-end: #B2EBF2; /* Lighter Blue */
+            --summary-text-color: #00796B; /* Teal */
+            --details-content-bg: #FFFFFF;
+            --details-content-text: #37474F; /* Dark Grey Blue */
+            --details-content-border: #B2EBF2;
+            --scroll-to-top-bg: #00BCD4;
+            --scroll-to-top-hover-bg: #00838F;
+            --list-color: #455A64; /* Darker Grey Blue */
+            --general-text-color: #37474F; /* For general paragraphs */
+
+            /* Workflow Diagram Colors (Light Mode) */
+            --workflow-step-fill: #E0F7FA;
+            --workflow-step-stroke: #00BCD4;
+            --workflow-text-color: #37474F;
+            --workflow-arrow-color: #00BCD4;
+            --workflow-step-hover-fill: #B2EBF2;
+            --tooltip-bg: #F0F8FF; /* AliceBlue - very light blue */
+            --tooltip-text: #263238; /* Dark Grey Blue */
+            --tooltip-border: #ADD8E6; /* Light Blue */
+        }
+
+        /* Dark Mode (Dynamic Twilight Blue/Purple) */
+        html.dark-mode {
+            --bg-gradient-start: #0A1931; /* Very dark blue */
+            --bg-gradient-mid: #152A4F; /* Slightly lighter blue */
+            --bg-gradient-end: #221A3B; /* Dark purple */
+            --card-bg: #1A2A4A; /* Darker blue for card */
+            --main-title-gradient-start: #8C9EFF; /* Light Blue Accent */
+            --main-title-gradient-end: #BBDEFB; /* Lighter Blue */
+            --subtitle-color: #C5CAE9; /* Light Indigo */
+            --section-heading-color: #8C9EFF;
+            --section-heading-border: #5C6BC0;
+            --code-block-bg: #0D1117; /* Very Dark Blue */
+            --code-block-text: #C5CAE9;
+            --copy-button-bg: #8C9EFF;
+            --copy-button-hover-bg: #5C6BC0;
+            --summary-gradient-start: #283593;
+            --summary-gradient-end: #3F51B5;
+            --summary-text-color: #C5CAE9;
+            --details-content-bg: #1A237E;
+            --details-content-text: #C5CAE9;
+            --details-content-border: #3F51B5;
+            --scroll-to-top-bg: #8C9EFF;
+            --scroll-to-top-hover-bg: #5C6BC0;
+            --list-color: #C5CAE9;
+            --general-text-color: #C5CAE9;
+
+            /* Workflow Diagram Colors (Dark Mode) */
+            --workflow-step-fill: #283593;
+            --workflow-step-stroke: #8C9EFF;
+            --workflow-text-color: #C5CAE9;
+            --workflow-arrow-color: #8C9EFF;
+            --workflow-step-hover-fill: #3F51B5;
+            --tooltip-bg: #0D1117;
+            --tooltip-text: #C5CAE9;
+            --tooltip-border: #8C9EFF;
+        }
+
+        /* Base styles for body and typography */
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, var(--bg-gradient-start), var(--bg-gradient-mid), var(--bg-gradient-end));
+            background-size: 400% 400%;
+            animation: gradientBackground 15s ease infinite;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            padding: 2rem 1rem;
+            color: var(--general-text-color); /* General text color */
+            transition: color 0.3s ease-in-out;
+        }
+
+        @keyframes gradientBackground {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        /* Main container card */
+        .container-card {
+            background-color: var(--card-bg);
+            border-radius: 1.25rem;
+            box-shadow: 0 15px 30px -8px rgba(0, 0, 0, 0.1), 0 6px 12px -4px rgba(0, 0, 0, 0.05); /* Softer shadow */
+            padding: 2.5rem;
+            max-width: 45rem; /* Maintained reduced max-width */
+            width: 100%;
+            transform: translateY(0);
+            transition: transform 0.3s ease-out, background-color 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+            position: relative; /* For dark mode toggle positioning */
+        }
+        .container-card:hover {
+            transform: translateY(-3px); /* Subtle lift on hover */
+        }
+
+        /* Main title styling */
+        .main-title {
+            background: linear-gradient(90deg, var(--main-title-gradient-start), var(--main-title-gradient-end));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-size: 3rem;
+            font-weight: 800;
+            text-align: center;
+            margin-bottom: 0.8rem;
+            line-height: 1.1;
+            text-shadow: 0 0 5px rgba(0, 188, 212, 0.3); /* Subtle glow for light blue */
+            transition: all 0.3s ease-in-out;
+        }
+        html.dark-mode .main-title {
+            text-shadow: 0 0 5px rgba(140, 158, 255, 0.3); /* Subtle glow for dark mode blue */
+        }
+        @media (max-width: 768px) {
+            .main-title {
+                font-size: 2rem;
+            }
+        }
+
+        /* Subtitle styling */
+        .subtitle {
+            font-size: 1.1rem;
+            color: var(--subtitle-color);
+            text-align: center;
+            margin-bottom: 1.8rem;
+            line-height: 1.6;
+            max-width: 90%;
+            margin-left: auto;
+            margin-right: auto;
+            transition: color 0.3s ease-in-out;
+        }
+        @media (max-width: 768px) {
+            .subtitle {
+                font-size: 0.9rem;
+            }
+        }
+
+        /* Section headings */
+        .section-heading {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--section-heading-color);
+            margin-bottom: 1rem;
+            padding-bottom: 0.6rem;
+            border-bottom: 3px solid var(--section-heading-border);
+            position: relative;
+            overflow: hidden;
+            transition: color 0.3s ease-in-out, border-color 0.3s ease-in-out;
+        }
+        .section-heading::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background: linear-gradient(90deg, var(--section-heading-border), transparent);
+            opacity: 0.7;
+        }
+
+        /* Code block styling */
+        .code-block {
+            background-color: var(--code-block-bg);
+            color: var(--code-block-text);
+            padding: 1.2rem;
+            border-radius: 0.75rem;
+            overflow-x: auto;
+            position: relative;
+            box-shadow: inset 0 3px 6px rgba(0, 0, 0, 0.2); /* Softer inner shadow */
+            font-size: 0.8rem;
+            line-height: 1.4;
+            transition: transform 0.2s ease-in-out, background-color 0.3s ease-in-out, color 0.3s ease-in-out;
+            margin-bottom: 0.8rem;
+            border: 1px solid rgba(0, 188, 212, 0.2); /* Subtle border for definition */
+        }
+        html.dark-mode .code-block {
+            border: 1px solid rgba(140, 158, 255, 0.2);
+        }
+        .code-block:hover {
+            transform: translateY(-2px); /* Softer lift */
+            box-shadow: inset 0 3px 6px rgba(0, 0, 0, 0.3), 0 3px 8px rgba(0, 0, 0, 0.15); /* Softer outer shadow on hover */
+        }
+
+        /* Copy button styling */
+        .code-block button {
+            position: absolute;
+            top: 0.6rem;
+            right: 0.6rem;
+            background-color: var(--copy-button-bg);
+            color: white;
+            padding: 0.3rem 0.7rem;
+            border-radius: 0.4rem;
+            font-size: 0.7rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s ease-in-out, transform 0.1s ease-in-out, box-shadow 0.2s;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
+        }
+        .code-block button:hover {
+            background-color: var(--copy-button-hover-bg);
+            transform: translateY(-1px);
+            box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15);
+        }
+        .code-block button:active {
+            transform: translateY(0);
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+        }
+
+        /* Details (collapsible sections) styling */
+        details {
+            margin-bottom: 1.2rem;
+            border-radius: 1rem;
+            overflow: hidden;
+            box-shadow: 0 8px 16px -4px rgba(0, 0, 0, 0.1), 0 3px 6px -3px rgba(0, 0, 0, 0.05); /* Softer shadow */
+            transition: all 0.3s ease-out;
+        }
+        details[open] {
+            box-shadow: 0 6px 12px -3px rgba(0, 0, 0, 0.08), 0 2px 4px -2px rgba(0, 0, 0, 0.03);
+        }
+
+        details summary {
+            cursor: pointer;
+            font-weight: 700;
+            padding: 1.1rem 1.4rem;
+            background: linear-gradient(90deg, var(--summary-gradient-start), var(--summary-gradient-end));
+            transition: background 0.3s ease-in-out, border-radius 0.3s ease-in-out, color 0.3s ease-in-out;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: var(--summary-text-color);
+            font-size: 1.25rem;
+            position: relative;
+            z-index: 1;
+        }
+        details[open] summary {
+            background: linear-gradient(90deg, var(--summary-gradient-end), var(--summary-gradient-start));
+            border-bottom-left-radius: 0;
+            border-bottom-right-radius: 0;
+            box-shadow: none;
+        }
+        details summary::after {
+            content: '';
+            width: 1.3rem;
+            height: 1.3rem;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke-width='2.5' stroke='currentColor'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M12 4.5v15m7.5-7.5h-15' /%3E%3C/svg%3E");
+            background-size: contain;
+            background-repeat: no-repeat;
+            transition: transform 0.3s ease-in-out;
+            stroke: currentColor;
+        }
+        details[open] summary::after {
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke-width='2.5' stroke='currentColor'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M19.5 12h-15' /%3E%3C/svg%3E");
+            transform: rotate(0deg);
+        }
+
+        /* Details content styling */
+        .details-content {
+            background-color: var(--details-content-bg);
+            padding: 1.5rem;
+            border-bottom-left-radius: 1rem;
+            border-bottom-right-radius: 1rem;
+            border-top: 1px solid var(--details-content-border);
+            font-size: 0.9rem;
+            line-height: 1.6;
+            color: var(--details-content-text);
+            transition: max-height 0.4s ease-in-out, opacity 0.4s ease-in-out, background-color 0.3s ease-in-out, color 0.3s ease-in-out;
+            overflow: hidden;
+            max-height: 0;
+            opacity: 0;
+        }
+        details[open] .details-content {
+            max-height: 2000px;
+            opacity: 1;
+        }
+
+        .details-content h3 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--section-heading-color);
+            margin-top: 1rem;
+            margin-bottom: 0.7rem;
+            transition: color 0.3s ease-in-out;
+        }
+        .details-content h4 {
+            font-size: 1rem;
+            font-weight: 500;
+            color: var(--details-content-text);
+            margin-top: 0.8rem;
+            margin-bottom: 0.5rem;
+            transition: color 0.3s ease-in-out;
+        }
+        ul.list-disc {
+            margin-left: 1rem;
+            list-style-type: disc;
+            color: var(--list-color);
+            transition: color 0.3s ease-in-out;
+        }
+        ul.list-disc li {
+            margin-bottom: 0.3rem;
+        }
+
+        /* Scroll-to-top button */
+        #scrollToTopBtn {
+            position: fixed;
+            bottom: 1rem;
+            right: 1rem;
+            background-color: var(--scroll-to-top-bg);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 2.5rem;
+            height: 2.5rem;
+            font-size: 1.1rem;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.15);
+            transition: opacity 0.3s ease-in-out, transform 0.2s ease-in-out, background-color 0.3s ease-in-out;
+            opacity: 0;
+            transform: scale(0.8);
+            z-index: 1000;
+        }
+        #scrollToTopBtn.show {
+            opacity: 1;
+            transform: scale(1);
+        }
+        #scrollToTopBtn:hover {
+            background-color: var(--scroll-to-top-hover-bg);
+            transform: scale(1.05);
+        }
+
+        /* Dark Mode Toggle Button */
+        #darkModeToggle {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background-color: var(--copy-button-bg);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 2.2rem;
+            height: 2.2rem;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            box-shadow: 0 1px 6px rgba(0, 0, 0, 0.1);
+            transition: background-color 0.3s ease-in-out, transform 0.2s ease-in-out;
+            z-index: 1001;
+        }
+        #darkModeToggle:hover {
+            background-color: var(--copy-button-hover-bg);
+            transform: scale(1.1);
+        }
+        #darkModeToggle svg {
+            width: 1.1rem;
+            height: 1.1rem;
+            transition: transform 0.3s ease-in-out;
+            stroke: currentColor;
+        }
+        html.dark-mode #darkModeToggle svg.sun-icon {
+            transform: rotate(90deg);
+            opacity: 0;
+            position: absolute;
+        }
+        html.dark-mode #darkModeToggle svg.moon-icon {
+            transform: rotate(0deg);
+            opacity: 1;
+        }
+        #darkModeToggle svg.sun-icon {
+            opacity: 1;
+            transform: rotate(0deg);
+        }
+        #darkModeToggle svg.moon-icon {
+            opacity: 0;
+            transform: rotate(-90deg);
+            position: absolute;
+        }
+
+        /* Workflow Diagram Specific Styles */
+        .workflow-diagram-container {
+            width: 100%;
+            overflow-x: auto; /* Allow horizontal scrolling if diagram is too wide */
+            margin-bottom: 2rem;
+            padding: 1rem 0;
+            display: flex;
+            justify-content: center; /* Center the SVG */
+        }
+
+        .workflow-diagram {
+            width: 100%; /* Make SVG responsive to container width */
+            height: auto;
+            min-width: 700px; /* Ensure diagram is not too small on narrow screens */
+        }
+
+        .workflow-step {
+            fill: var(--workflow-step-fill);
+            stroke: var(--workflow-step-stroke);
+            stroke-width: 2;
+            transition: fill 0.3s ease-in-out, stroke 0.3s ease-in-out, transform 0.2s ease-in-out;
+            cursor: pointer;
+        }
+
+        .workflow-step:hover {
+            fill: var(--workflow-step-hover-fill);
+            transform: translateY(-3px);
+        }
+
+        .workflow-text {
+            font-family: 'Inter', sans-serif;
+            font-size: 16px;
+            font-weight: 600;
+            fill: var(--workflow-text-color);
+            transition: fill 0.3s ease-in-out;
+            pointer-events: none; /* Allow clicks to pass through to the rectangle */
+        }
+
+        .workflow-arrow, .workflow-arrow-head {
+            stroke: var(--workflow-arrow-color);
+            fill: var(--workflow-arrow-color);
+            transition: stroke 0.3s ease-in-out, fill 0.3s ease-in-out;
+        }
+
+        /* Tooltip Styles */
+        #tooltip {
+            position: fixed; /* Use fixed for easier positioning relative to viewport */
+            background-color: var(--tooltip-bg);
+            color: var(--tooltip-text);
+            padding: 0.75rem 1rem;
+            border-radius: 20px; /* More cloud-like rounded corners */
+            border: 1px solid var(--tooltip-border);
+            font-size: 0.85rem;
+            line-height: 1.4;
+            opacity: 0;
+            transition: opacity 0.2s ease-in-out, transform 0.2s ease-in-out;
+            pointer-events: none; /* Allows mouse events to pass through */
+            z-index: 1002; /* Above other elements */
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            max-width: 250px; /* Limit tooltip width */
+            text-align: center;
+            /* Initial off-screen state for dimension calculation */
+            top: -9999px;
+            left: -9999px;
+            visibility: hidden; /* Hide completely until ready to show */
+        }
+
+        #tooltip::after {
+            content: '';
+            position: absolute;
+            bottom: -15px; /* Position below the tooltip body */
+            left: 50%;
+            transform: translateX(-50%) rotate(45deg); /* Creates a diamond shape */
+            width: 25px; /* Even larger pointer */
+            height: 25px; /* Even larger pointer */
+            background-color: var(--tooltip-bg);
+            border-right: 1px solid var(--tooltip-border);
+            border-bottom: 1px solid var(--tooltip-border);
+            border-bottom-right-radius: 8px; /* Softer, more rounded corner for pointer */
+            z-index: -1; /* Behind the tooltip content */
+        }
+
+        #tooltip.point-up::after {
+            bottom: auto;
+            top: -15px; /* Position above the tooltip body, pointing upwards */
+            border-top: 1px solid var(--tooltip-border);
+            border-left: 1px solid var(--tooltip-border);
+            border-bottom: none;
+            border-right: none;
+            border-top-left-radius: 8px;
+            border-bottom-right-radius: 0; /* Reset this */
+            transform: translateX(-50%) rotate(-45deg); /* Point upwards */
+        }
+    </style>
+</head>
+<body>
+    <div class="container-card">
+        <button id="darkModeToggle" aria-label="Toggle dark mode">
+            <svg class="sun-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v2.25m6.364.364l-1.591 1.591M21 12h-2.25m-.364 6.364l-1.591-1.591M12 18.75V21m-6.364-.364l1.591-1.591M3 12H5.25m-.364-6.364l1.591 1.591M12 12a3 3 0 110 6 3 3 0 010-6z" />
+            </svg>
+            <svg class="moon-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M21.752 15.002A9.718 9.718 0 0118 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.612.72-3.823m.006 8.63c.075.43.238.827.477 1.185A9.71 9.71 0 008.25 15c5.385 0 9.75-4.365 9.75-9.75 0-1.33-.266-2.612-.72-3.823" />
+            </svg>
+        </button>
+
+        <h1 class="main-title">Helm Kubernetes Volume Guide</h1>
+        <p class="subtitle">
+            Welcome to this comprehensive guide designed to help you master Helm Kubernetes volumes. Whether you're setting up persistent storage for your applications or configuring ingress for seamless access, this interactive guide provides clear, step-by-step instructions. Dive in to learn how to prepare your host, configure `k3d` clusters, set up NGINX Ingress, and deploy your Helm charts with confidence.
+        </p>
+
+        <!-- Workflow Diagram Container -->
+        <div class="workflow-diagram-container">
+            <svg viewBox="0 0 880 150" class="workflow-diagram">
+                <!-- Step 1 -->
+                <rect x="40" y="50" width="160" height="50" rx="10" ry="10" class="workflow-step" id="step1"
+                    data-description="Prepare your host machine by creating a shared storage directory and then initialize your k3d cluster with this volume mounted.">
+                </rect>
+                <text x="120" y="80" text-anchor="middle" class="workflow-text">1. Host & Cluster</text>
+
+                <!-- Arrow 1-2 -->
+                <line x1="200" y1="75" x2="240" y2="75" stroke-width="2" class="workflow-arrow"></line>
+                <polygon points="235,70 245,75 235,80" class="workflow-arrow-head"></polygon>
+
+                <!-- Step 2 -->
+                <rect x="260" y="50" width="160" height="50" rx="10" ry="10" class="workflow-step" id="step2"
+                    data-description="Set up the NGINX Ingress controller using Helm to manage external access to your web application.">
+                </rect>
+                <text x="340" y="80" text-anchor="middle" class="workflow-text">2. Setup Ingress</text>
+
+                <!-- Arrow 2-3 -->
+                <line x1="420" y1="75" x2="460" y2="75" stroke-width="2" class="workflow-arrow"></line>
+                <polygon points="455,70 465,75 455,80" class="workflow-arrow-head"></polygon>
+
+                <!-- Step 3 -->
+                <rect x="480" y="50" width="160" height="50" rx="10" ry="10" class="workflow-step" id="step3"
+                    data-description="Create and configure your custom Helm chart, defining Persistent Volumes, Persistent Volume Claims, and NGINX configurations.">
+                </rect>
+                <text x="560" y="80" text-anchor="middle" class="workflow-text">3. Deploy Chart</text>
+
+                <!-- Arrow 3-4 -->
+                <line x1="640" y1="75" x2="680" y2="75" stroke-width="2" class="workflow-arrow"></line>
+                <polygon points="675,70 685,75 675,80" class="workflow-arrow-head"></polygon>
+
+                <!-- Step 4 -->
+                <rect x="700" y="50" width="100" height="50" rx="10" ry="10" class="workflow-step" id="step4"
+                    data-description="Verify the successful deployment by checking pods, accessing the mounted index.html, and testing external access via curl.">
+                </rect>
+                <text x="750" y="80" text-anchor="middle" class="workflow-text">4. Verify</text>
+            </svg>
+        </div>
+
+        <h2 class="section-heading">Prerequisites</h2>
+        <ul class="list-disc text-lg mb-8 ml-6">
+            <li><strong>Docker:</strong> Essential for `k3d` to create and manage your cluster.</li>
+            <li><strong>`k3d`:`</strong> Your go-to tool for spinning up lightweight `k3s` clusters within Docker.</li>
+            <li><strong>`helm`:`</strong> The powerful package manager for deploying and managing applications on Kubernetes.</li>
+        </ul>
+
+        <!-- Step 1 -->
+        <details>
+            <summary>
+                Step 1: Prepare the Host and Cluster
+            </summary>
+            <div class="details-content">
+                <p>First, we need to set up the host machine's directory that will serve as our persistent storage, and then create the `k3d` cluster with this volume mounted.</p>
+
+                <h3>1. Create the Storage Directory:</h3>
+                <p>This directory will be shared with all nodes in your `k3d` cluster. We'll also place a simple `index.html` file in it to test our deployment later.</p>
+                <div class="code-block">
+                    <button onclick="copyCode(this)">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 17.25v3.375c0 .621-.504 1.125-1.125 1.125h-9.75a1.125 1.125 0 01-1.125-1.125V7.875c0-.621.504-1.125 1.125-1.125z" />
+                        </svg>
+                        Copy
+                    </button>
+                    <pre><code>sudo mkdir -p /mnt/data
+sudo chmod -R 777 /mnt/data
+echo "&lt;h1&gt;Welcome to My Web App&lt;/h1&gt;" | sudo tee /mnt/data/index.html</code></pre>
+                </div>
+
+                <h3>2. Create the `k3d` Cluster:</h3>
+                <p>This command creates a cluster with two nodes (one server, one agent), disables the default Traefik ingress controller, and maps ports `80` and `443` from the host to the cluster's load balancer. Most importantly, it mounts the `/mnt/data` directory we just created into all cluster nodes.</p>
+                <div class="code-block">
+                    <button onclick="copyCode(this)">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 17.25v3.375c0 .621-.504 1.125-1.125 1.125h-9.75a1.125 1.125 0 01-1.125-1.125V7.875c0-.621.504-1.125 1.125-1.125z" />
+                        </svg>
+                        Copy
+                    </button>
+                    <pre><code>k3d cluster create mycluster \
+  --servers 1 \
+  --agents 1 \
+  --k3s-arg "--disable=traefik@server:0" \
+  --port "80:80@loadbalancer" \
+  --port "443:443@loadbalancer" \
+  --volume /mnt/data:/mnt/data@all</code></pre>
+                </div>
+            </div>
+        </details>
+
+        <!-- Step 2 -->
+        <details>
+            <summary>
+                Step 2: Set up Ingress
+            </summary>
+            <div class="details-content">
+                <p>We need an Ingress controller to manage external access to our web application. We'll use the `ingress-nginx` Helm chart.</p>
+
+                <h3>1. Add and Update the Helm Repository:</h3>
+                <div class="code-block">
+                    <button onclick="copyCode(this)">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 17.25v3.375c0 .621-.504 1.125-1.125 1.125h-9.75a1.125 1.125 0 01-1.125-1.125V7.875c0-.621.504-1.125 1.125-1.125z" />
+                        </svg>
+                        Copy
+                    </button>
+                    <pre><code>helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
+helm repo update</code></pre>
+                </div>
+
+                <h3>2. Install `ingress-nginx`:</h3>
+                <p>The key step here is setting the `externalIPs` value. This tells the LoadBalancer service to use your specific external IP address, ensuring traffic is routed correctly.</p>
+                <div class="code-block">
+                    <button onclick="copyCode(this)">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 17.25v3.375c0 .621-.504 1.125-1.125 1.125h-9.75a1.125 1.125 0 01-1.125-1.125V7.875c0-.621.504-1.125 1.125-1.125z" />
+                        </svg>
+                        Copy
+                    </button>
+                    <pre><code>helm install ingress-nginx ingress-nginx/ingress-nginx \
+  --namespace ingress-nginx \
+  --create-namespace \
+  --set controller.service.externalIPs[0]=34.29.60.206</code></pre>
+                </div>
+            </div>
+        </details>
+
+        <!-- Step 3 -->
+        <details>
+            <summary>
+                Step 3: Configure and Deploy the Helm Chart
+            </summary>
+            <div class="details-content">
+                <p>Now we'll create our custom Helm chart and configure it to use our persistent volume and the Ingress controller.</p>
+
+                <h3>1. Create the Helm Chart:</h3>
+                <div class="code-block">
+                    <button onclick="copyCode(this)">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 17.25v3.375c0 .621-.504 1.125-1.125 1.125h-9.75a1.125 1.125 0 01-1.125-1.125V7.875c0-.621.504-1.125 1.125-1.125z" />
+                        </svg>
+                        Copy
+                    </button>
+                    <pre><code>helm create mywebapp</code></pre>
+                </div>
+
+                <h3>2. Define a `StorageClass`:</h3>
+                <p>The `rancher.io/local-path` provisioner is used by `k3s` for local storage. This `StorageClass` allows our PersistentVolumeClaim to bind to a local volume. Apply this manifest to your cluster.</p>
+                <div class="code-block">
+                    <button onclick="copyCode(this)">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 17.25v3.375c0 .621-.504 1.125-1.125 1.125h-9.75a1.125 1.125 0 01-1.125-1.125V7.875c0-.621.504-1.125 1.125-1.125z" />
+                        </svg>
+                        Copy
+                    </button>
+                    <pre><code># manual-storageclass.yaml
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: manual
+provisioner: rancher.io/local-path
+volumeBindingMode: WaitForFirstConsumer
+reclaimPolicy: Delete</code></pre>
+                </div>
+                <div class="code-block">
+                    <button onclick="copyCode(this)">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 17.25v3.375c0 .621-.504 1.125-1.125 1.125h-9.75a1.125 1.125 0 01-1.125-1.125V7.875c0-.621.504-1.125 1.125-1.125z" />
+                        </svg>
+                        Copy
+                    </button>
+                    <pre><code>kubectl apply -f manual-storageclass.yaml</code></pre>
+                </div>
+
+                <h3>3. Update the `values.yaml` File:</h3>
+                <p>This is the heart of our chart's configuration. We'll modify it to:
+                    <ul class="list-disc ml-4 mt-2">
+                        <li>Set `replicaCount` to 2 for high availability.</li>
+                        <li>Configure the NGINX container and `Service`.</li>
+                        <li>Enable **persistence** and point it to our `manual` `StorageClass` and `/mnt/data` path.</li>
+                        <li>Enable **Ingress** and set the `host` to `mywebapp.local`, which will be handled by our `nginx` Ingress controller.</li>
+                    </ul>
+                </p>
+                <div class="code-block">
+                    <button onclick="copyCode(this)">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 17.25v3.375c0 .621-.504 1.125-1.125 1.125h-9.75a1.125 1.125 0 01-1.125-1.125V7.875c0-.621.504-1.125 1.125-1.125z" />
+                        </svg>
+                        Copy
+                    </button>
+                    <pre><code># mywebapp/values.yaml
+replicaCount: 2
+
+image:
+  repository: nginx
+  pullPolicy: IfNotPresent
+  tag: "latest"
+
+service:
+  name: myweb-mywebapp
+  type: ClusterIP
+  port: 80
+
+configMap:
+  enabled: true
+  data:
+    default.conf: |
+      server {
+        listen 80;
+        server_name localhost;
+        location / {
+          root /usr/share/nginx/html;
+          index index.html;
+        }
+      }
+
+persistence:
+  enabled: true
+  storageClass: manual
+  accessMode: ReadWriteOnce
+  size: 1Gi
+  path: /mnt/data
+
+ingress:
+  enabled: true
+  className: nginx
+  annotations: {}
+  hosts:
+    - host: mywebapp.local
+      paths:
+        - path: /
+          pathType: Prefix</code></pre>
+                </div>
+
+                <h3>4. Define Helm Chart Templates:</h3>
+                <p>These templates dynamically create the necessary Kubernetes resources based on your `values.yaml` configuration.</p>
+
+                <h4>Persistent Volume (PV) Template (`templates/pv.yaml`):</h4>
+                <div class="code-block">
+                    <button onclick="copyCode(this)">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 17.25v3.375c0 .621-.504 1.125-1.125 1.125h-9.75a1.125 1.125 0 01-1.125-1.125V7.875c0-.621.504-1.125 1.125-1.125z" />
+                        </svg>
+                        Copy
+                    </button>
+                    <pre><code># mywebapp/templates/pv.yaml
+{{- if .Values.persistence.enabled -}}
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: {{ .Release.Name }}-pv
+spec:
+  storageClassName: {{ .Values.persistence.storageClass }}
+  capacity:
+    storage: {{ .Values.persistence.size }}
+  accessModes:
+    - {{ .Values.persistence.accessMode }}
+  hostPath:
+    path: {{ .Values.persistence.path }}
+{{- end -}}</code></pre>
+                </div>
+
+                <h4>Persistent Volume Claim (PVC) Template (`templates/pvc.yaml`):</h4>
+                <div class="code-block">
+                    <button onclick="copyCode(this)">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 17.25v3.375c0 .621-.504 1.125-1.125 1.125h-9.75a1.125 1.125 0 01-1.125-1.125V7.875c0-.621.504-1.125 1.125-1.125z" />
+                        </svg>
+                        Copy
+                    </button>
+                    <pre><code># mywebapp/templates/pvc.yaml
+{{- if and .Values.persistence.enabled (not .Values.persistence.existingClaim) }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ .Release.Name }}-pvc
+spec:
+  storageClassName: {{ .Values.persistence.storageClass | default "" }}
+  accessModes:
+    - {{ .Values.persistence.accessMode }}
+  resources:
+    requests:
+      storage: {{ .Values.persistence.size }}
+{{- end }}</code></pre>
+                </div>
+
+                <h4>Deployment Template (`templates/deployment.yaml`):</h4>
+                <p>This defines your NGINX application deployment, including replica count, image, and volume mounts for both the ConfigMap and the Persistent Volume Claim.</p>
+                <div class="code-block">
+                    <button onclick="copyCode(this)">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 17.25v3.375c0 .621-.504 1.125-1.125 1.125h-9.75a1.125 1.125 0 01-1.125-1.125V7.875c0-.621.504-1.125 1.125-1.125z" />
+                        </svg>
+                        Copy
+                    </button>
+                    <pre><code># mywebapp/templates/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-deployment
+  labels:
+    {{- include "mywebapp.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "mywebapp.selectorLabels" . | nindent 8 }}
+  template:
+    metadata:
+      labels:
+        {{- include "mywebapp.selectorLabels" . | nindent 12 }}
+    spec:
+      containers:
+        - name: {{ .Chart.Name }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: 80
+              protocol: TCP
+          volumeMounts:
+            - name: config-volume
+              mountPath: /etc/nginx/conf.d/
+              # subPath: default.conf
+            - name: data-volume
+              mountPath: /usr/share/nginx/html
+      volumes:
+        - name: config-volume
+          configMap:
+            name: {{ .Release.Name }}-configmap
+        - name: data-volume
+          persistentVolumeClaim:
+            claimName: {{ if .Values.persistence.existingClaim }}{{ .Values.persistence.existingClaim }}{{ else }}{{ .Release.Name }}-pvc{{ end }}</code></pre>
+                </div>
+
+                <h4>ConfigMap Template (`templates/configmap.yaml`):</h4>
+                <p>This ConfigMap holds the NGINX server configuration, which is then mounted into the NGINX container.</p>
+                <div class="code-block">
+                    <button onclick="copyCode(this)">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 17.25v3.375c0 .621-.504 1.125-1.125 1.125h-9.75a1.125 1.125 0 01-1.125-1.125V7.875c0-.621.504-1.125 1.125-1.125z" />
+                        </svg>
+                        Copy
+                    </button>
+                    <pre><code># mywebapp/templates/configmap.yaml
+{{- if .Values.configMap.enabled -}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-configmap
+data:
+  default.conf: |
+      server {
+        listen 80;
+        server_name localhost;
+        location / {
+          root /usr/share/nginx/html;
+          index index.html;
+        }
+      }
+{{- end -}}</code></pre>
+                </div>
+
+                <h3>5. Install the Helm Chart:</h3>
+                <p>This command installs your `mywebapp` chart into a new namespace called `webapp`.</p>
+                <div class="code-block">
+                    <button onclick="copyCode(this)">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 17.25v3.375c0 .621-.504 1.125-1.125 1.125h-9.75a1.125 1.125 0 01-1.125-1.125V7.875c0-.621.504-1.125 1.125-1.125z" />
+                        </svg>
+                        Copy
+                    </button>
+                    <pre><code>helm install myweb . --namespace webapp --create-namespace</code></pre>
+                </div>
+            </div>
+        </details>
+
+        <!-- Step 4 -->
+        <details>
+            <summary>
+                Step 4: Verify the Deployment
+            </summary>
+            <div class="details-content">
+                <p>After installation, verify that everything is running as expected.</p>
+
+                <h3>1. Check the Pods:</h3>
+                <p>Make sure your application pods are running.</p>
+                <div class="code-block">
+                    <button onclick="copyCode(this)">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 17.25v3.375c0 .621-.504 1.125-1.125 1.125h-9.75a1.125 1.125 0 01-1.125-1.125V7.875c0-.621.504-1.125 1.125-1.125z" />
+                        </svg>
+                        Copy
+                    </button>
+                    <pre><code>kubectl get pods -n webapp</code></pre>
+                </div>
+
+                <h3>2. Verify the `index.html` File:</h3>
+                <p>This command logs into one of your application pods and confirms that it can access the `index.html` file from the mounted persistent volume at `/usr/share/nginx/html`.</p>
+                <div class="code-block">
+                    <button onclick="copyCode(this)">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 17.25v3.375c0 .621-.504 1.125-1.125 1.125h-9.75a1.125 1.125 0 01-1.125-1.125V7.875c0-.621.504-1.125 1.125-1.125z" />
+                        </svg>
+                        Copy
+                    </button>
+                    <pre><code>kubectl exec -it -n webapp myweb-deployment-587f697c8b-mf72f -- ls -la /usr/share/nginx/html</code></pre>
+                </div>
+
+                <h3>3. Test Access via `curl`:</h3>
+                <p>
+                    <ul class="list-disc ml-4 mt-2">
+                        <li><strong>Add an Entry to Your `/etc/hosts` file:</strong> This is crucial for local testing, as it maps the `mywebapp.local` domain to your LoadBalancer's external IP address.</li>
+                        <li><strong>Access the Web App:</strong> Use `curl` to send a request. The response should be the `index.html` file from your `/mnt/data` directory.</li>
+                    </ul>
+                </p>
+                <div class="code-block">
+                    <button onclick="copyCode(this)">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 17.25v3.375c0 .621-.504 1.125-1.125 1.125h-9.75a1.125 1.125 0 01-1.125-1.125V7.875c0-.621.504-1.125 1.125-1.125z" />
+                        </svg>
+                        Copy
+                    </button>
+                    <pre><code># nano /etc/hosts
+34.29.60.206 mywebapp.local</code></pre>
+                </div>
+                <div class="code-block">
+                    <button onclick="copyCode(this)">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 17.25v3.375c0 .621-.504 1.125-1.125 1.125h-9.75a1.125 1.125 0 01-1.125-1.125V7.875c0-.621.504-1.125 1.125-1.125z" />
+                        </svg>
+                        Copy
+                    </button>
+                    <pre><code># curl http://mywebapp.local
+&lt;h1&gt;Welcome to My Web App&lt;/h1&gt;</code></pre>
+                </div>
+            </div>
+        </details>
+    </div>
+
+    <!-- Scroll to Top Button -->
+    <button id="scrollToTopBtn" title="Go to top">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 10.5L12 3m0 0l7.5 7.5M12 3v18" />
+        </svg>
+    </button>
+
+    <script>
+        // Smooth scroll for details elements
+        document.querySelectorAll('details').forEach(detail => {
+            detail.addEventListener('toggle', () => {
+                const content = detail.querySelector('.details-content');
+                if (detail.open) {
+                    content.style.maxHeight = content.scrollHeight + 'px';
+                    content.style.opacity = 1;
+                } else {
+                    content.style.maxHeight = '0';
+                    content.style.opacity = 0;
+                }
+            });
+        });
+
+        // Function to copy code to clipboard
+        function copyCode(button) {
+            const codeBlock = button.previousElementSibling; // Get the <pre><code> element
+            const code = codeBlock.innerText;
+
+            const textarea = document.createElement('textarea');
+            textarea.value = code;
+            document.body.appendChild(textarea);
+            textarea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textarea);
+
+            button.textContent = 'Copied!';
+            setTimeout(() => {
+                button.innerHTML = `
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 17.25v3.375c0 .621-.504 1.125-1.125 1.125h-9.75a1.125 1.125 0 01-1.125-1.125V7.875c0-.621.504-1.125 1.125-1.125z" />
+                        </svg>
+                    Copy
+                `;
+            }, 2000);
+        }
+
+        // Scroll to top button functionality
+        const scrollToTopBtn = document.getElementById("scrollToTopBtn");
+
+        window.onscroll = function() {
+            if (document.body.scrollTop > 300 || document.documentElement.scrollTop > 300) {
+                scrollToTopBtn.classList.add("show");
+            } else {
+                scrollToTopBtn.classList.remove("show");
+            }
+        };
+
+        scrollToTopBtn.addEventListener("click", function() {
+            window.scrollTo({
+                top: 0,
+                behavior: "smooth"
+            });
+        });
+
+        // Dark Mode Toggle Functionality
+        const darkModeToggle = document.getElementById('darkModeToggle');
+
+        // Check for saved theme preference
+        const savedTheme = localStorage.getItem('theme');
+        if (savedTheme === 'dark') {
+            document.documentElement.classList.add('dark-mode');
+        }
+
+        darkModeToggle.addEventListener('click', () => {
+            document.documentElement.classList.toggle('dark-mode');
+            // Save theme preference
+            if (document.documentElement.classList.contains('dark-mode')) {
+                localStorage.setItem('theme', 'dark');
+            } else {
+                localStorage.setItem('theme', 'light');
+            }
+        });
+
+        // Tooltip Functionality
+        const tooltip = document.createElement('div');
+        tooltip.id = 'tooltip';
+        document.body.appendChild(tooltip);
+
+        document.querySelectorAll('.workflow-step').forEach(step => {
+            step.addEventListener('mouseover', (event) => {
+                const description = step.dataset.description;
+                if (description) {
+                    tooltip.textContent = description;
+
+                    // Temporarily make tooltip visible off-screen to get its dimensions
+                    tooltip.style.visibility = 'hidden';
+                    tooltip.style.display = 'block'; // Ensure it takes up space
+                    tooltip.style.opacity = '0'; // Keep it invisible for now
+                    tooltip.style.left = '0px'; // Reset left for accurate width calculation
+                    tooltip.style.top = '0px'; // Reset top
+
+                    const rect = event.target.getBoundingClientRect();
+                    const tooltipWidth = tooltip.offsetWidth;
+                    const tooltipHeight = tooltip.offsetHeight;
+
+                    // Restore initial hidden state
+                    tooltip.style.visibility = 'visible';
+                    tooltip.style.display = 'block';
+
+                    // Calculate position relative to the viewport
+                    let leftPos = rect.left + (rect.width / 2) - (tooltipWidth / 2);
+                    let topPos = rect.top - tooltipHeight - 15; // 15px for pointer height + gap
+
+                    const padding = 10; // Padding from viewport edges
+
+                    // Horizontal boundary checks
+                    if (leftPos < padding) {
+                        leftPos = padding;
+                    }
+                    if (leftPos + tooltipWidth > window.innerWidth - padding) {
+                        leftPos = window.innerWidth - tooltipWidth - padding;
+                    }
+
+                    // Vertical boundary checks and pointer adjustment
+                    if (topPos < padding) { // If tooltip goes above viewport top
+                        topPos = rect.bottom + 15; // Place it below the element
+                        tooltip.classList.add('point-up'); // Make pointer point upwards
+                    } else {
+                        tooltip.classList.remove('point-up'); // Ensure pointer points downwards
+                    }
+
+                    tooltip.style.left = `${leftPos}px`;
+                    tooltip.style.top = `${topPos}px`;
+                    tooltip.style.opacity = '1';
+                    tooltip.style.transform = 'translateY(0)';
+                }
+            });
+
+            step.addEventListener('mouseout', () => {
+                tooltip.style.opacity = '0';
+                tooltip.style.transform = 'translateY(5px)';
+                tooltip.style.display = 'none'; // Hide completely after transition
+            });
+        });
+    </script>
+</body>
+</html>
